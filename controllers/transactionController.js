@@ -3,10 +3,10 @@ import Project from '../models/Project.js';
 
 // @desc    Create a transaction (Buy credits)
 // @route   POST /api/transactions
-// @access  Public
+// @access  Private
 export const createTransaction = async (req, res) => {
   try {
-    const { projectId, buyerId, creditsToBuy } = req.body;
+    const { projectId, creditsToBuy } = req.body;
 
     const project = await Project.findById(projectId);
     
@@ -23,7 +23,7 @@ export const createTransaction = async (req, res) => {
 
     const transaction = await Transaction.create({
       project: projectId,
-      buyer: buyerId,
+      buyer: req.user._id,
       seller: project.seller,
       credits: creditsToBuy,
       price: totalPrice,
@@ -44,13 +44,13 @@ export const createTransaction = async (req, res) => {
 };
 
 // @desc    Get user transactions
-// @route   GET /api/transactions/user/:userId
-// @access  Public
+// @route   GET /api/transactions/mytransactions
+// @access  Private
 export const getUserTransactions = async (req, res) => {
   try {
-    const transactions = await Transaction.find({ buyer: req.params.userId })
-      .populate('project', 'title type location')
-      .populate('seller', 'name');
+    const transactions = await Transaction.find({ buyer: req.user._id })
+      .populate('project', 'title projectType location')
+      .populate('seller', 'name email');
     res.json(transactions);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });

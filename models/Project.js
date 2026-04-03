@@ -42,6 +42,7 @@ const projectSchema = mongoose.Schema({
   certificationDate: { type: String },
   monitoringPeriod: { type: String },
   additionalBenefits: [{ type: String }],
+  auditorFeedback: { type: String },
   
   // Files / evidence
   documents: [{
