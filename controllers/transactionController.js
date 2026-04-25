@@ -1,5 +1,6 @@
 import Transaction from '../models/Transaction.js';
 import Project from '../models/Project.js';
+import { recordTransactionOnPolygon } from '../utils/polygon.js';
 
 // @desc    Create a transaction (Buy credits)
 // @route   POST /api/transactions
@@ -7,6 +8,7 @@ import Project from '../models/Project.js';
 export const createTransaction = async (req, res) => {
   try {
     const { projectId, creditsToBuy } = req.body;
+    console.log("CREATE TRANSACTION BODY:", req.body);
 
     const project = await Project.findById(projectId);
     
@@ -21,12 +23,16 @@ export const createTransaction = async (req, res) => {
     // Calculate total price
     const totalPrice = creditsToBuy * project.pricePerCredit;
 
+    if (req.user.inrBalance < totalPrice) {
+      return res.status(400).json({ message: 'Insufficient wallet balance. Please top up your wallet.' });
+    }
+
     const transaction = await Transaction.create({
       project: projectId,
       buyer: req.user._id,
       seller: project.seller,
       credits: creditsToBuy,
-      price: totalPrice,
+      amount: totalPrice,
       status: 'completed'
     });
 
@@ -36,6 +42,23 @@ export const createTransaction = async (req, res) => {
       project.status = 'retired';
     }
     await project.save();
+
+    // Deduct wallet balance and add credits to buyer
+    req.user.inrBalance -= totalPrice;
+    req.user.creditBalance += creditsToBuy;
+    await req.user.save();
+
+    // Record on Polygon blockchain
+    const blockchainHash = await recordTransactionOnPolygon({
+      projectId,
+      buyer: req.user._id,
+      credits: creditsToBuy,
+      timestamp: new Date().toISOString()
+    });
+
+    transaction.blockchainHash = blockchainHash;
+    transaction.blockchainNetwork = 'Polygon Amoy';
+    await transaction.save();
 
     res.status(201).json(transaction);
   } catch (error) {

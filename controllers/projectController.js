@@ -59,7 +59,7 @@ export const createProject = async (req, res) => {
   try {
     const { 
       title, projectType, energyUse, fuelType, emissionFactor, additionalityProof, 
-      iotConnected, iotDeviceId, selectedAuditor, credits 
+      iotConnected, iotDeviceId, selectedAuditor, credits, pricePerCredit
     } = req.body;
     
     // Fallback if structured location string was sent
@@ -86,6 +86,7 @@ export const createProject = async (req, res) => {
       iotDeviceId,
       selectedAuditor: (selectedAuditor && /^[0-9a-fA-F]{24}$/.test(selectedAuditor)) ? selectedAuditor : undefined,
       credits: Number(credits) || 0,
+      pricePerCredit: Number(pricePerCredit) || 0,
       status: 'pending',
     });
 

@@ -1,6 +1,7 @@
 import Transaction from '../models/Transaction.js';
 import User from '../models/User.js';
 import crypto from 'crypto';
+import { recordTransactionOnPolygon } from '../utils/polygon.js';
 
 // @desc    Get user wallet balances
 // @route   GET /api/wallet/balance
@@ -55,9 +56,14 @@ export const createWalletTransaction = async (req, res) => {
       user.creditBalance -= quantity;
       transactionData.credits = quantity;
       
-      // Generate secure mock blockchain hash
-      transactionData.blockchainHash = '0x' + crypto.randomBytes(20).toString('hex');
-      transactionData.blockchainNetwork = 'Solana-Mock'; // Preparing for real solana network later
+      // Generate blockchain hash
+      transactionData.blockchainHash = await recordTransactionOnPolygon({
+        buyer: req.user._id,
+        type: 'retire',
+        quantity,
+        timestamp: new Date().toISOString()
+      });
+      transactionData.blockchainNetwork = 'Polygon Amoy';
     }
 
     await user.save();
