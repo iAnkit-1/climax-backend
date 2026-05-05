@@ -20,7 +20,8 @@ const userSchema = mongoose.Schema({
     required: true, 
     enum: ['active', 'pending', 'suspended'],
     default: 'active'
-  },
+  },  isActive: { type: Boolean, default: true },
+
   joinedDate: { type: Date, default: Date.now }
 }, { timestamps: true });
 
